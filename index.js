@@ -7,9 +7,10 @@ const Config = require(path.join(__dirname, "config.json"));
 WEBHOOK_URL = Config["WebhookURL"];
 
 DEPLOY_HISTORY_URL = "https://setup.rbxcdn.com/DeployHistory.txt";
-//DEPLOY_HISTORY_URL = "https://imtheo.lol/DeployHistory.txt";
 CURRENT_VERSION_URL =
   "https://clientsettings.roblox.com/v2/client-version/WindowsPlayer/channel/LIVE";
+ZBETA_VERSION_URL =
+  "https://clientsettings.roblox.com/v2/client-version/WindowsPlayer/channel/ZBeta";
 
 KNOWN_FILE = path.join(__dirname, "known.json");
 
@@ -161,6 +162,37 @@ async function CheckDeployHistory() {
   }
 }
 
+async function CheckZBeta() {
+  try {
+    const KnownVersions = JSON.parse(fs.readFileSync(KNOWN_FILE, "utf-8"));
+
+    const VersionInfoRaw = await fetch(ZBETA_VERSION_URL);
+    const VersionInfo = await VersionInfoRaw.json();
+    if(VersionInfo["errors"]) return;
+
+    const CurrentVersion = VersionInfo["clientVersionUpload"];
+
+    if (CurrentVersion === undefined) {
+      console.log("Couldn't get current version, got:", VersionInfo);
+      return;
+    }
+
+    //console.log("Current version:", CurrentVersion);
+    if (!KnownVersions["Unpublished"][CurrentVersion]) {
+      console.log("new published version!!");
+
+      KnownVersions["Unpublished"][CurrentVersion] = {
+        FirstSeen: new Date().toISOString(),
+      };
+
+      fs.writeFileSync(KNOWN_FILE, JSON.stringify(KnownVersions, null, 4));
+      await SendPreUpdate(CurrentVersion);
+    }
+  } catch (e) {
+    console.log("Error in CheckZBeta", e);
+  }
+}
+
 async function CheckCurrentVersion() {
   try {
     const KnownVersions = JSON.parse(fs.readFileSync(KNOWN_FILE, "utf-8"));
@@ -193,6 +225,7 @@ async function CheckCurrentVersion() {
 async function CheckForUpdates() {
   await CheckDeployHistory();
   await CheckCurrentVersion();
+  await CheckZBeta();
 }
 
 CheckForUpdates();
