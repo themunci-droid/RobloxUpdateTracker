@@ -70,9 +70,7 @@ async function SendRevert(VersionHash, PreviousVersion) {
 
 async function SendPreUpdate(VersionHash) {
   const EmbedData = {
-    content: Confirmed
-      ? `<@&${Config["PingRoleID"]}>`
-      : "<@1081551899397992509>",
+    content: `<@&${Config["PingRoleID"]}>`,
     embeds: [
       {
         title: "Future Update Detected",
