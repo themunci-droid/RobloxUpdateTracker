@@ -7,6 +7,7 @@
   },
   "EmbedDescriptions": {
     "PreUpdate": "An unpublished Roblox version has been detected on the `LIVE` channel!\nThis means the update is **NOT** released yet, but will be within ~24 hours.",
-    "Update": "A new Roblox version has been detected on the `LIVE` channel!\nThis means the update **IS** released! Most externals / executors will be down temporarily.*"
+    "Update": "A new Roblox version has been detected on the `LIVE` channel!\nThis means the update **IS** released! Most externals / executors will be down temporarily.*",
+    "Revert": "Roblox has reverted to a previous version on the `LIVE` channel!\nThis means that some exploits or externals **MAY** be down temporarily."
   }
 }
