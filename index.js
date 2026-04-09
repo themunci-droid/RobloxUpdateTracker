@@ -12,11 +12,67 @@ CURRENT_VERSION_URL =
 ZBETA_VERSION_URL =
   "https://clientsettings.roblox.com/v2/client-version/WindowsPlayer/channel/ZBeta";
 
+/*CURRENT_VERSION_URL =
+  "http://localhost:7722/v2/client-version/WindowsPlayer/channel/LIVE";
+ZBETA_VERSION_URL =
+  "http://localhost:7722/v2/client-version/WindowsPlayer/channel/ZBeta";*/
+
 KNOWN_FILE = path.join(__dirname, "known.json");
+
+function GetLatestPublished(KnownVersions) {
+  const Versions = Object.keys(KnownVersions["Published"]);
+  if (Versions.length === 0) return null;
+
+  return Versions.sort((a, b) => {
+    const A = KnownVersions["Published"][a].FirstSeen;
+    const B = KnownVersions["Published"][b].FirstSeen;
+    return new Date(B) - new Date(A);
+  })[0];
+}
+
+async function SendRevert(VersionHash, PreviousVersion) {
+  const EmbedData = {
+    content: `<@&${Config["PingRoleID"]}>`,
+    embeds: [
+      {
+        title: "Update Reverted",
+        description: Config["EmbedDescriptions"]["Revert"],
+        color: 10181046,
+        footer: Config["EmbedFooter"],
+        timestamp: new Date().toISOString(),
+        fields: [
+          {
+            name: "Reverted To",
+            value: "`" + VersionHash + "`",
+            inline: false,
+          },
+          {
+            name: "Previous Version",
+            value: "`" + PreviousVersion + "`",
+            inline: false,
+          },
+          {
+            name: "Timestamp",
+            value: `<t:${Math.floor(Date.now() / 1000)}:f>`,
+            inline: false,
+          },
+        ],
+      },
+    ],
+  };
+
+  await fetch(WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(EmbedData),
+  });
+}
 
 async function SendPreUpdate(VersionHash) {
   const EmbedData = {
-    content: `<@&${Config["PingRoleID"]}>`,
+    content: Confirmed
+      ? `<@&${Config["PingRoleID"]}>`
+      : "<@1081551899397992509>",
     embeds: [
       {
         title: "Future Update Detected",
@@ -168,7 +224,7 @@ async function CheckZBeta() {
 
     const VersionInfoRaw = await fetch(ZBETA_VERSION_URL);
     const VersionInfo = await VersionInfoRaw.json();
-    if(VersionInfo["errors"]) return;
+    if (VersionInfo["errors"]) return;
 
     const CurrentVersion = VersionInfo["clientVersionUpload"];
 
@@ -206,7 +262,9 @@ async function CheckCurrentVersion() {
       return;
     }
 
-    //console.log("Current version:", CurrentVersion);
+    const LatestKnown = GetLatestPublished(KnownVersions);
+    const LastLive = KnownVersions["LastLiveVersion"];
+
     if (!KnownVersions["Published"][CurrentVersion]) {
       console.log("new published version!!");
 
@@ -214,8 +272,19 @@ async function CheckCurrentVersion() {
         FirstSeen: new Date().toISOString(),
       };
 
+      KnownVersions["LastLiveVersion"] = CurrentVersion;
+
       fs.writeFileSync(KNOWN_FILE, JSON.stringify(KnownVersions, null, 4));
       await SendUpdate(CurrentVersion);
+    } else {
+      if (LastLive && CurrentVersion !== LastLive) {
+        console.log("revert detected!!");
+
+        await SendRevert(CurrentVersion, LastLive);
+
+        KnownVersions["LastLiveVersion"] = CurrentVersion;
+        fs.writeFileSync(KNOWN_FILE, JSON.stringify(KnownVersions, null, 4));
+      }
     }
   } catch (e) {
     console.log("Error in CheckCurrentVersion", e);
