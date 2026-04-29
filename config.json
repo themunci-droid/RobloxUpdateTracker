@@ -1,6 +1,6 @@
 {
   "WebhookURL": "https://discordapp.com/api/webhooks/1498704513509363862/9SoXMa5Pn7XXpdMBBq2zKCnEk6udVhQEuhdTLLRjT9b9x5ojsBI4E1kW-n_9ZIqYBmdL",
-  "PingRoleID": "everyone",
+  "PingRoleID": "@everyone",
   "GameIDs": [9872472334],
   "EmbedFooter": {
     "text": "BLACK CAT - Evade Tracker",
